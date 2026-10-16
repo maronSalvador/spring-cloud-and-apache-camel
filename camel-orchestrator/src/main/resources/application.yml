@@ -1,0 +1,39 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: camel-orchestrator
+  datasource:
+    # docker compose up (see ../docker-compose.yml)
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/orchestrator}
+    username: ${DB_USER:orchestrator}
+    password: ${DB_PASSWORD:orchestrator}
+  jpa:
+    hibernate:
+      ddl-auto: none  # schema comes from db/init.sh
+
+camel:
+  springboot:
+    name: camel-orchestrator
+
+orchestrator:
+  # Header the client sends its correlation id in
+  correlation-header: X-Correlation-Id
+  default-error:
+    status: 502
+    message: "The service is temporarily unavailable. Please try again later."
+  http:
+    connect-timeout: 2000
+    request-timeout: 5000
+  apis:
+    validate:
+      name: validation_url
+    token:
+      name: token_url
+      request-body: '{"grant_type":"client_credentials","client_id":"demo","client_secret":"secret"}'
+      token-field: access_token
+    process:
+      name: process_url
+    audit:
+      url: http://localhost:9004/audit

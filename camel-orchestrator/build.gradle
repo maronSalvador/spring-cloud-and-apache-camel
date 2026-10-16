@@ -1,0 +1,41 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.10'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Camel BOM keeps all camel-* starters on a compatible version
+    implementation platform('org.apache.camel.springboot:camel-spring-boot-bom:4.10.3')
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'      // servlet container for platform-http
+    implementation 'org.apache.camel.springboot:camel-spring-boot-starter'
+    implementation 'org.apache.camel.springboot:camel-platform-http-starter' // REST entry point in route DSL
+    implementation 'org.apache.camel.springboot:camel-http-starter'          // outbound HTTP calls
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml' // XML -> JSON transform
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation("org.postgresql:postgresql:42.7.3")
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.apache.camel.springboot:camel-test-spring-junit5'
+    testImplementation 'io.rest-assured:rest-assured'
+    testImplementation 'org.wiremock:wiremock-standalone:3.9.1'
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}

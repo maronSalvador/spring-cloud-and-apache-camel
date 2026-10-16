@@ -1,0 +1,367 @@
+{
+	"info": {
+		"name": "camel-orchestrator",
+		"description": "Tests the full ACE-replacement stack:\n\ngateway :8090 → orchestrator :8080 → system-api :9001 (+ Postgres audit)\n\nPrerequisites: `docker compose up --build` from the workspace root, or all three services running locally. The audit trail lives in the `audit_log` table (`docker compose exec postgres psql -U orchestrator -d orchestrator -c 'SELECT * FROM audit_log'`).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "gateway_url",
+			"value": "http://localhost:8090"
+		},
+		{
+			"key": "orchestrator_url",
+			"value": "http://localhost:8080"
+		},
+		{
+			"key": "system_api_url",
+			"value": "http://localhost:9001"
+		}
+	],
+	"item": [
+		{
+			"name": "1. End-to-end via gateway :8090",
+			"description": "The full flow with resiliency applied (circuit breaker, retry on connect failures, timeouts).",
+			"item": [
+				{
+					"name": "Happy path — returns transformed JSON",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"XML was transformed to JSON\", () => {",
+									"    pm.expect(pm.response.json().response.orderId).to.eql(\"A-1\");",
+									"});",
+									"pm.test(\"Content-Type is JSON\", () => {",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "X-Correlation-Id", "value": "gw-{{$timestamp}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"order\":\"A-1\"}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/process",
+							"host": ["{{gateway_url}}"],
+							"path": ["process"]
+						}
+					}
+				},
+				{
+					"name": "No correlation id — one is generated",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"body echoes the order\", () => {",
+									"    pm.expect(pm.response.json().response.orderId).to.eql(\"B-2\");",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"order\":\"B-2\"}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/process",
+							"host": ["{{gateway_url}}"],
+							"path": ["process"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Orchestrator direct :8080",
+			"description": "Same flow bypassing the gateway — isolates Camel routing from gateway resiliency.",
+			"item": [
+				{
+					"name": "Happy path — bypasses gateway",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"transformed JSON returned\", () => {",
+									"    pm.expect(pm.response.json().response.orderId).to.eql(\"A-1\");",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "X-Correlation-Id", "value": "direct-{{$timestamp}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"order\":\"A-1\"}"
+						},
+						"url": {
+							"raw": "{{orchestrator_url}}/process",
+							"host": ["{{orchestrator_url}}"],
+							"path": ["process"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. System API :9001",
+			"description": "The three system APIs the route steps call, tested in isolation.",
+			"item": [
+				{
+					"name": "validate — valid payload",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"status VALID\", () => pm.expect(pm.response.json().status).to.eql(\"VALID\"));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{\"order\":\"A-1\"}" },
+						"url": {
+							"raw": "{{system_api_url}}/validate",
+							"host": ["{{system_api_url}}"],
+							"path": ["validate"]
+						}
+					}
+				},
+				{
+					"name": "validate — blank payload (400)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
+									"pm.test(\"status INVALID\", () => pm.expect(pm.response.json().status).to.eql(\"INVALID\"));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "   " },
+						"url": {
+							"raw": "{{system_api_url}}/validate",
+							"host": ["{{system_api_url}}"],
+							"path": ["validate"]
+						}
+					}
+				},
+				{
+					"name": "token — client_credentials grant",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"access_token present\", () => pm.expect(pm.response.json()).to.have.property(\"access_token\"));",
+									"pm.test(\"Bearer token type\", () => pm.expect(pm.response.json().token_type).to.eql(\"Bearer\"));",
+									"// stash it for the process step's Authorization header if needed",
+									"pm.collectionVariables.set(\"access_token\", pm.response.json().access_token);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"grant_type\":\"client_credentials\",\"client_id\":\"demo\",\"client_secret\":\"secret\"}"
+						},
+						"url": {
+							"raw": "{{system_api_url}}/token",
+							"host": ["{{system_api_url}}"],
+							"path": ["token"]
+						}
+					}
+				},
+				{
+					"name": "token — unsupported grant (400)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{\"grant_type\":\"password\"}" },
+						"url": {
+							"raw": "{{system_api_url}}/token",
+							"host": ["{{system_api_url}}"],
+							"path": ["token"]
+						}
+					}
+				},
+				{
+					"name": "process — returns XML",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"XML echoes the order\", () => {",
+									"    pm.expect(pm.response.text()).to.include(\"<orderId>A-1</orderId>\");",
+									"});",
+									"pm.test(\"Content-Type is XML\", () => {",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/xml\");",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{\"order\":\"A-1\"}" },
+						"url": {
+							"raw": "{{system_api_url}}/process",
+							"host": ["{{system_api_url}}"],
+							"path": ["process"]
+						}
+					}
+				},
+				{
+					"name": "process — missing order (400)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": { "mode": "raw", "raw": "{}" },
+						"url": {
+							"raw": "{{system_api_url}}/process",
+							"host": ["{{system_api_url}}"],
+							"path": ["process"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Gateway health & resiliency :8090",
+			"item": [
+				{
+					"name": "Gateway health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"status UP\", () => pm.expect(pm.response.json().status).to.eql(\"UP\"));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{gateway_url}}/actuator/health",
+							"host": ["{{gateway_url}}"],
+							"path": ["actuator", "health"]
+						}
+					}
+				},
+				{
+					"name": "Circuit breaker state",
+					"description": "Run this after stopping system-api to watch the circuit OPEN, then again after 10s to see HALF-OPEN.",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+									"pm.test(\"orchestratorCB registered\", () => {",
+									"    pm.expect(pm.response.json().circuitBreakers).to.have.property(\"orchestratorCB\");",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{gateway_url}}/actuator/circuitbreakers",
+							"host": ["{{gateway_url}}"],
+							"path": ["actuator", "circuitbreakers"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

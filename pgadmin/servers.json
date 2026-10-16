@@ -1,0 +1,13 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "camel-orchestrator",
+            "Group": "Stack",
+            "Host": "postgres",
+            "Port": 5432,
+            "MaintenanceDB": "orchestrator",
+            "Username": "orchestrator",
+            "SSLMode": "prefer"
+        }
+    }
+}

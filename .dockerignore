@@ -1,0 +1,4 @@
+# keep build context small and Windows artifacts out of the image
+**/build/
+**/.gradle/
+**/*Zone.Identifier

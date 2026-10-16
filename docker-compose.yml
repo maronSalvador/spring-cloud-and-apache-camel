@@ -1,0 +1,62 @@
+name: camel-orchestrator-stack
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: orchestrator
+      POSTGRES_USER: orchestrator
+      POSTGRES_PASSWORD: orchestrator
+      # seed sys_endpoints with the compose-internal hostname
+      SYSTEM_API_URL: http://system-api:9001
+    volumes:
+      - ./camel-orchestrator/db/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orchestrator -d orchestrator"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  system-api:
+    build: ./camel-system-api
+    restart: unless-stopped
+
+  orchestrator:
+    build: ./camel-orchestrator
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/orchestrator
+      DB_USER: orchestrator
+      DB_PASSWORD: orchestrator
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  gateway:
+    build: ./camel-gateway
+    environment:
+      # overrides the orchestrator.base-url placeholder in application.yml
+      ORCHESTRATOR_BASE_URL: http://orchestrator:8080
+    depends_on:
+      - orchestrator
+    ports:
+      - "8090:8090"
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      # must be a normal-looking domain: pgadmin rejects reserved names
+      # like .local ("special-use or reserved name") and won't start
+      PGADMIN_DEFAULT_EMAIL: admin@orchestrator.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+    # auto-registers the stack's postgres server (no manual setup)
+    volumes:
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5050:80"
+    restart: unless-stopped

@@ -1,0 +1,58 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: camel-gateway
+  cloud:
+    gateway:
+      httpclient:
+        connect-timeout: 2000
+        # orchestrator fans out to 3 downstream calls (~5s each), so the
+        # gateway budget must comfortably exceed a full round trip
+        response-timeout: 20s
+      routes:
+        - id: orchestrator
+          # overridable per environment (tests point this at a fake orchestrator)
+          uri: ${orchestrator.base-url:http://localhost:8080}
+          predicates:
+            - Path=/process
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: orchestratorCB
+            - name: Retry
+              args:
+                retries: 2
+                # the orchestration POST is not idempotent — retry ONLY
+                # connection failures/timeouts, never a completed response
+                # that may already have done work (empty series disables the
+                # filter's default "retry on any 5xx")
+                series: ""
+                exceptions: java.io.IOException, java.util.concurrent.TimeoutException
+                methods: POST
+                backoff:
+                  firstBackoff: 200ms
+                  maxBackoff: 1s
+                  factor: 2
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      orchestratorCB:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        slow-call-duration-threshold: 5s
+        slow-call-rate-threshold: 100
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,circuitbreakers
+  endpoint:
+    health:
+      show-details: always

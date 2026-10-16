@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.example.gateway.GatewayRoutingTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-15T12:25:14" hostname="Maron" time="2.179">
+  <properties/>
+  <testcase name="retriesConnectionFailuresTwiceThenFailsFast()" classname="com.example.gateway.GatewayRoutingTest" time="1.837"/>
+  <testcase name="doesNotRetryCompletedResponses()" classname="com.example.gateway.GatewayRoutingTest" time="0.033"/>
+  <testcase name="proxiesRequestAndResponseToTheOrchestrator()" classname="com.example.gateway.GatewayRoutingTest" time="0.307"/>
+  <system-out><![CDATA[20:25:11.387 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.example.gateway.GatewayRoutingTest]: GatewayRoutingTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+20:25:11.451 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.example.gateway.GatewayApplication for test class com.example.gateway.GatewayRoutingTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.3.10)
+
+2026-10-15T20:25:12.174+08:00  INFO 3062 --- [camel-gateway] [    Test worker] com.example.gateway.GatewayRoutingTest   : Starting GatewayRoutingTest using Java 17.0.20.1 with PID 3062 (started by maron in /home/maron/claude-projects/camel-gateway)
+2026-10-15T20:25:12.176+08:00  INFO 3062 --- [camel-gateway] [    Test worker] com.example.gateway.GatewayRoutingTest   : No active profile set, falling back to 1 default profile: "default"
+2026-10-15T20:25:13.023+08:00  INFO 3062 --- [camel-gateway] [    Test worker] o.s.cloud.context.scope.GenericScope     : BeanFactory id=b9a5bc73-0701-30e5-8ee6-1dfb97840aa6
+2026-10-15T20:25:13.621+08:00  INFO 3062 --- [camel-gateway] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [After]
+2026-10-15T20:25:13.622+08:00  INFO 3062 --- [camel-gateway] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Before]
+2026-10-15T20:25:13.622+08:00  INFO 3062 --- [camel-gateway] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Between]
+2026-10-15T20:25:13.622+08:00  INFO 3062 --- [camel-gateway] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Cookie]
+2026-10-15T20:25:13.622+08:00  INFO 3062 --- [camel-gateway] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Header]
+2026-10-15T20:25:13.622+08:00  INFO 3062 --- [camel-gateway] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Host]
+2026-10-15T20:25:13.622+08:00  INFO 3062 --- [camel-gateway] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Method]
+2026-10-15T20:25:13.622+08:00  INFO 3062 --- [camel-gateway] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Path]
+2026-10-15T20:25:13.622+08:00  INFO 3062 --- [camel-gateway] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Query]
+2026-10-15T20:25:13.622+08:00  INFO 3062 --- [camel-gateway] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [ReadBody]
+2026-10-15T20:25:13.622+08:00  INFO 3062 --- [camel-gateway] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [RemoteAddr]
+2026-10-15T20:25:13.622+08:00  INFO 3062 --- [camel-gateway] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [XForwardedRemoteAddr]
+2026-10-15T20:25:13.622+08:00  INFO 3062 --- [camel-gateway] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Weight]
+2026-10-15T20:25:13.622+08:00  INFO 3062 --- [camel-gateway] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [CloudFoundryRouteService]
+2026-10-15T20:25:13.749+08:00  INFO 3062 --- [camel-gateway] [    Test worker] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
+2026-10-15T20:25:14.038+08:00  INFO 3062 --- [camel-gateway] [    Test worker] o.s.b.web.embedded.netty.NettyWebServer  : Netty started on port 33047 (http)
+2026-10-15T20:25:14.100+08:00  INFO 3062 --- [camel-gateway] [    Test worker] com.example.gateway.GatewayRoutingTest   : Started GatewayRoutingTest in 2.151 seconds (process running for 3.273)
+2026-10-15T20:25:15.277+08:00  WARN 3062 --- [camel-gateway] [or-http-epoll-2] r.netty.http.client.HttpClientConnect    : [39fda659-1, L:/127.0.0.1:57754 - R:localhost/127.0.0.1:37631] The connection observed an error, the request cannot be retried as the headers/body were sent
+
+io.netty.channel.unix.Errors$NativeIoException: recvAddress(..) failed: Connection reset by peer
+
+2026-10-15T20:25:15.492+08:00  WARN 3062 --- [camel-gateway] [or-http-epoll-3] r.netty.http.client.HttpClientConnect    : [4c89950d-1, L:/127.0.0.1:57762 - R:localhost/127.0.0.1:37631] The connection observed an error, the request cannot be retried as the headers/body were sent
+
+io.netty.channel.unix.Errors$NativeIoException: recvAddress(..) failed: Connection reset by peer
+
+2026-10-15T20:25:15.900+08:00  WARN 3062 --- [camel-gateway] [or-http-epoll-4] r.netty.http.client.HttpClientConnect    : [647a8f36-1, L:/127.0.0.1:57770 - R:localhost/127.0.0.1:37631] The connection observed an error, the request cannot be retried as the headers/body were sent
+
+io.netty.channel.unix.Errors$NativeIoException: recvAddress(..) failed: Connection reset by peer
+
+2026-10-15T20:25:15.905+08:00 ERROR 3062 --- [camel-gateway] [or-http-epoll-4] o.s.w.s.adapter.HttpWebHandlerAdapter    : [9b769287-1] 500 Server Error for HTTP POST "/process"
+
+io.netty.channel.unix.Errors$NativeIoException: recvAddress(..) failed: Connection reset by peer
+	Suppressed: reactor.core.publisher.FluxOnAssembly$OnAssemblyException: 
+Error has been observed at the following site(s):
+	*__checkpoint ⇢ org.springframework.cloud.gateway.filter.WeightCalculatorWebFilter [DefaultWebFilterChain]
+	*__checkpoint ⇢ HTTP POST "/process" [ExceptionHandlingWebHandler]
+Original Stack Trace:
+
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
